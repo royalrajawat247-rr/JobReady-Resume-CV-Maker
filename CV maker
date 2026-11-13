@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0d0f14" />
+  <title>JobReady: Resume & CV Maker</title>
+  <link rel="manifest" href="manifest.json" />
+  <script src="https://cloudflare.com"></script>
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --card: #161922;
+      --card2: #1e222d;
+      --text: #f3f4f6;
+      --muted: #9ca3af;
+      --primary: #6366f1;
+      --accent: #ec4899;
+      --grad: linear-gradient(135deg, #6366f1, #ec4899);
+      --border: #2a2f3d;
+      --success: #10b981;
+    }
+    body.light {
+      --bg: #f3f4f6;
+      --card: #ffffff;
+      --card2: #f9fafb;
+      --text: #111827;
+      --muted: #4b5563;
+      --border: #e5e7eb;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background: var(--bg); color: var(--text); padding-bottom: 120px; transition: background 0.2s, color 0.2s; }
+    
+    /* Header */
+    header { padding: 14px 16px; background: var(--card); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 50; display: flex; justify-content: space-between; align-items: center; }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .logo-box { width: 36px; height: 36px; border-radius: 10px; background: var(--grad); display: flex; align-items: center; justify-content: center; font-weight: 800; color: #fff; font-size: 18px; }
+    .brand h1 { font-size: 17px; font-weight: 700; }
+    .brand p { font-size: 11px; color: var(--muted); }
+    .badge-plan { background: var(--card2); border: 1px solid var(--border); padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; color: #fbbf24; }
+
+    /* Pages */
+    .page { display: none; padding: 16px; max-width: 600px; margin: 0 auto; animation: fadeIn 0.2s ease; }
+    .page.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Cards & Inputs */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 14px; }
+    .card-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+    .pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .pill { background: var(--card2); border: 1px solid var(--border); padding: 5px 10px; border-radius: 8px; font-size: 11px; color: var(--muted); }
+    
+    label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; font-weight: 600; }
+    input, textarea, select { width: 100%; background: var(--card2); border: 1px solid var(--border); color: var(--text); padding: 10px 12px; border-radius: 10px; font-size: 14px; outline: none; }
+    input:focus, textarea:focus { border-color: var(--primary); }
+    
+    .smart-btn { background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.4); padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer; }
+    .btn-primary { width: 100%; background: var(--grad); color: #fff; border: none; padding: 13px; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 12px; box-shadow: 0 4px 14px rgba(236, 72, 153, 0.3); }
+    .btn-secondary { width: 100%; background: var(--card2); color: var(--text); border: 1px solid var(--border); padding: 11px; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+
+    /* Signature Canvas */
+    canvas#sigPad { background: #fff; border-radius: 10px; width: 100%; height: 100px; touch-action: none; border: 1px dashed var(--muted); }
+
+    /* Templates Grid */
+    .tpl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .tpl-card { background: var(--card); border: 2px solid var(--border); border-radius: 12px; padding: 10px; cursor: pointer; position: relative; }
+    .tpl-card.selected { border-color: var(--accent); }
+    .tpl-preview-box { height: 110px; border-radius: 8px; margin-bottom: 8px; padding: 8px; font-size: 8px; overflow: hidden; }
+    .vip-tag { position: absolute; top: 8px; right: 8px; background: #f59e0b; color: #000; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 6px; }
+    .free-tag { position: absolute; top: 8px; right: 8px; background: var(--success); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 6px; }
+
+    /* Plans */
+    .plan-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 14px; position: relative; }
+    .plan-card.best { border: 2px solid var(--accent); }
+    .best-badge { position: absolute; top: -10px; right: 14px; background: var(--grad); color: #fff; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 10px; }
+    .price { font-size: 28px; font-weight: 800; margin: 6px 0; }
+    .price span { font-size: 13px; color: var(--muted); font-weight: 400; }
+    .plan-list { list-style: none; margin: 10px 0; font-size: 13px; color: var(--muted); }
+    .plan-list li { margin-bottom: 6px; }
+
+    /* Banner Ad Slot */
+    .ad-banner { position: fixed; bottom: 62px; left: 0; right: 0; height: 48px; background: #11131a; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 14px; z-index: 45; font-size: 12px; }
+    .ad-banner.hidden { display: none; }
+
+    /* Bottom Nav */
+    nav { position: fixed; bottom: 0; left: 0; right: 0; height: 62px; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; z-index: 50; }
+    .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 11px; color: var(--muted); cursor: pointer; gap: 3px; width: 20%; }
+    .nav-item.active { color: #f59e0b; font-weight: 700; }
+    .nav-icon { font-size: 18px; }
+
+    /* Modal for PDF Preview */
+    #previewModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; overflow-y: auto; padding: 16px; }
+    .modal-box { max-width: 600px; margin: 0 auto; background: #fff; color: #111; border-radius: 12px; overflow: hidden; }
+    .modal-actions { background: var(--card); padding: 12px; display: flex; gap: 10px; position: sticky; top: 0; z-index: 10; }
+    
+    /* Actual A4 Resume Styles */
+    #resumeRender { padding: 28px; background: #fff; color: #1f2937; min-height: 750px; }
+    .res-header { display: flex; align-items: center; gap: 16px; border-bottom: 2px solid #2563eb; padding-bottom: 14px; margin-bottom: 14px; }
+    .res-photo { width: 75px; height: 75px; border-radius: 50%; object-fit: cover; border: 2px solid #2563eb; display: none; }
+    .res-name { font-size: 24px; font-weight: 800; color: #111827; }
+    .res-role { font-size: 14px; color: #2563eb; font-weight: 600; }
+    .res-contact { font-size: 11px; color: #4b5563; margin-top: 4px; }
+    .res-sec { margin-bottom: 14px; }
+    .res-sec-title { font-size: 13px; font-weight: 800; text-transform: uppercase; color: #2563eb; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px; margin-bottom: 6px; letter-spacing: 0.5px; }
+    .res-text { font-size: 12px; line-height: 1.5; white-space: pre-line; }
+    .res-footer { margin-top: 24px; display: flex; justify-content: space-between; align-items: flex-end; }
+    .res-sig { max-height: 45px; }
+    .watermark { font-size: 10px; color: #9ca3af; }
+
+    /* Template Themes */
+    .theme-exec .res-header { background: #1e293b; color: #fff; padding: 16px; border-radius: 8px; border: none; }
+    .theme-exec .res-name { color: #fff; }
+    .theme-exec .res-role { color: #38bdf8; }
+    .theme-exec .res-contact { color: #cbd5e1; }
+    .theme-exec .res-sec-title { color: #0f172a; border-bottom: 2px solid #0f172a; }
+
+    .theme-emerald .res-header { border-bottom-color: #059669; }
+    .theme-emerald .res-role, .theme-emerald .res-sec-title { color: #059669; }
+
+    .theme-minimal .res-header { border-bottom: 1px solid #111; }
+    .theme-minimal .res-role, .theme-minimal .res-sec-title { color: #111; }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <div class="logo-box">JR</div>
+      <div>
+        <h1>JobReady</h1>
+        <p>ATS Resume & CV Maker • ऑफ़लाइन</p>
+      </div>
+    </div>
+    <div class="badge-plan" id="currentPlanBadge">मुफ़्त प्लान</div>
+  </header>
+
+  <!-- PAGE 1: HOME (BUILDER) -->
+  <div id="page-home" class="page active">
+    <div class="card">
+      <div class="card-title">100% ऑफ़लाइन, तेज़ और सुरक्षित</div>
+      <div class="pills">
+        <span class="pill">📄 ATS-Friendly HD</span>
+        <span class="pill">🔒 डेटा फोन में सुरक्षित</span>
+        <span class="pill">⚡ 1-क्लिक स्मार्ट टेक्स्ट</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">1. व्यक्तिगत जानकारी (Personal Info)</div>
+      <label>पासपोर्ट फोटो चुनें (वैकल्पिक)</label>
+      <input type="file" id="inPhoto" accept="image/*" onchange="loadPhoto(event)" />
+      
+      <label>पूरा नाम (Full Name) *</label>
+      <input type="text" id="inName" placeholder="जैसे: Rahul Sharma" />
+
+      <label>पद / जॉब टाइटल (Job Title) *</label>
+      <input type="text" id="inRole" placeholder="जैसे: Sales Executive / Computer Operator" />
+
+      <label>मोबाइल नंबर और ईमेल</label>
+      <input type="text" id="inContact" placeholder="जैसे: +91 9876543210 | rahul@email.com" />
+
+      <label>पूरा पता (City, State)</label>
+      <input type="text" id="inAddress" placeholder="जैसे: Gomti Nagar, Lucknow, UP" />
+    </div>
+
+    <div class="card">
